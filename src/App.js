@@ -1,68 +1,99 @@
 import React from 'react';
 import './index.css';
 
-const CardList = (props) => (
-  <div>
-    {props.profiles.map(profile => <Card key={profile.id} {...profile} />)}
-  </div>
+const StarsDisplay = props => (
+  <>
+    {utils.range(1, props.count).map(starId =>
+      <div key={starId} className="star" />
+    )}
+  </>
 );
 
-class Card extends React.Component {
-  render() {
-    const profile = this.props;
-    return (
-      <div className="github-profile">
-        <img src={profile.avatar_url} />
-        <div className="info">
-          <div className="name">{profile.name}</div>
-          <div className="company">{profile.company}</div>
+const PlayNumber = props => (
+  <button
+    className="number"
+    style={{ backgroundColor: colors[props.status] }}
+    onClick={() => console.log('Num', props.number)}>
+    {props.number}
+  </button>
+);
+
+const StarMatch = () => {
+  const [stars, setStars] = useState(utils.random(1, 9));
+  const [availableNums, setAvailableNums] = useState([1, 2, 3, 4, 5]);
+  const [candidateNums, setCandidateNums] = useState([2, 3])
+
+  const candidatesAreWrong = utils.sum(candidateNums) > stars;
+
+  const numberStatus = (number) => {
+    if (!availableNums.includes(number)) {
+      return 'used';
+    }
+    if (candidateNums.includes(number)) {
+      return candidatesAreWrong ? 'wrong' : 'candidate'
+    }
+    return 'available';
+
+  };
+
+  return (
+    <div className="game">
+      <div className="help">
+        Pick 1 or more numbers that sum to the number of stars
+      </div>
+      <div className="body">
+        <div className="left">
+          <StarsDisplay count={stars} />
+        </div>
+        <div className="right">
+          {utils.range(1, 9).map(number =>
+            <PlayNumber
+              key={number}
+              status={numberStatus(number)}
+              number={number} />
+          )}
         </div>
       </div>
-    );
-  }
-}
+      <div className="timer">Time Remaining: 10</div>
+    </div>
+  );
+};
 
-class Form extends React.Component {
-  state = { userName: '' };
-  handleSubmit = async (event) => {
-    event.preventDefault();
-    const resp = await axios.get(`https://api.github.com/users/${this.state.userName}`);
-    this.props.onSubmit(resp.data);
-    this.setState({ userName: '' });
-  };
-  render() {
-    return (
-      <form onSubmit={this.handleSubmit}>
-        <input
-          type="text"
-          value={this.state.userName}
-          onChange={event => this.setState({ userName: event.target.value })}
-          placeholder="GitHub username"
-          required
-        />
-        <button>Add card</button>
-      </form>
-    );
-  }
-}
+// Color Theme
+const colors = {
+  available: 'lightgray',
+  used: 'lightgreen',
+  wrong: 'lightcoral',
+  candidate: 'deepskyblue',
+};
 
-class App extends React.Component {
-  state = {
-    profiles: [],
-  };
-  addNewProfile = (profileData) => {
-    this.setState(prevState => ({
-      profiles: [...prevState.profiles, profileData],
-    }));
-  };
-  render() {
-    return (
-      <div>
-        <div className="header">{this.props.title}</div>
-        <Form onSubmit={this.addNewProfile} />
-        <CardList profiles={this.state.profiles} />
-      </div>
-    );
-  }
-}
+// Math science
+const utils = {
+  // Sum an array
+  sum: arr => arr.reduce((acc, curr) => acc + curr, 0),
+
+  // create an array of numbers between min and max (edges included)
+  range: (min, max) => Array.from({ length: max - min + 1 }, (_, i) => min + i),
+
+  // pick a random number between min and max (edges included)
+  random: (min, max) => min + Math.floor(max * Math.random()),
+
+  // Given an array of numbers and a max...
+  // Pick a random sum (< max) from the set of all available sums in arr
+  randomSumIn: (arr, max) => {
+    const sets = [[]];
+    const sums = [];
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = 0, len = sets.length; j < len; j++) {
+        const candidateSet = sets[j].concat(arr[i]);
+        const candidateSum = utils.sum(candidateSet);
+        if (candidateSum <= max) {
+          sets.push(candidateSet);
+          sums.push(candidateSum);
+        }
+      }
+    }
+    return sums[utils.random(0, sums.length)];
+  },
+};
 export default App;
