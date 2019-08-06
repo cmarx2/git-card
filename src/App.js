@@ -1,5 +1,6 @@
-import React from 'react';
-import './index.css';
+import React, { useState, useEffect } from 'react';
+
+
 
 // STAR MATCH - V5
 
@@ -173,4 +174,8 @@ const utils = {
   },
 };
 
-export default App;
+export default function App() {
+  return (
+    <StarMatch />
+  );
+}
